@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import AppLayout from "@/components/AppLayout";
 import Login from "@/pages/Login";
+import Home from "@/pages/Home";
+import Visit from "@/pages/Visit";
+import Riwayat from "@/pages/Riwayat";
 
 // Placeholder sementara untuk halaman yang belum di-port.
 function Soon({ title }: { title: string }) {
@@ -17,31 +21,18 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      {/* Area FOS (MD) */}
+      {/* Area FOS (MD) — semua di dalam shell AppLayout */}
       <Route
-        path="/"
         element={
           <ProtectedRoute>
-            <Soon title="Home" />
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/visit"
-        element={
-          <ProtectedRoute>
-            <Soon title="Kunjungan" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/riwayat"
-        element={
-          <ProtectedRoute>
-            <Soon title="Riwayat" />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/" element={<Home />} />
+        <Route path="/visit" element={<Visit />} />
+        <Route path="/riwayat" element={<Riwayat />} />
+      </Route>
 
       {/* Area Admin */}
       <Route

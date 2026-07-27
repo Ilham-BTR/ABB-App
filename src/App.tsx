@@ -5,16 +5,7 @@ import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 import Visit from "@/pages/Visit";
 import Riwayat from "@/pages/Riwayat";
-
-// Placeholder sementara untuk halaman yang belum di-port.
-function Soon({ title }: { title: string }) {
-  return (
-    <div className="p-8 text-center text-slate-500">
-      <h1 className="text-lg font-bold text-slate-700">{title}</h1>
-      <p className="mt-1 text-sm">Halaman ini sedang dipindahkan…</p>
-    </div>
-  );
-}
+import AdminRoutes from "@/pages/admin/AdminRoutes";
 
 export default function App() {
   return (
@@ -39,7 +30,7 @@ export default function App() {
         path="/admin/*"
         element={
           <ProtectedRoute admin>
-            <Soon title="Admin Panel" />
+            <AdminRoutes />
           </ProtectedRoute>
         }
       />

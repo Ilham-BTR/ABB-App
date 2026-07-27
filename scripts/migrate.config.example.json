@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy jadi migrate.config.json (sudah di-gitignore) lalu isi. JANGAN commit yang berisi kredensial.",
+  "supabaseUrl": "https://your-project-ref.supabase.co",
+  "serviceRoleKey": "GANTI_SERVICE_ROLE_KEY",
+
+  "_r2": "Dari Cloudflare R2 -> Manage API Tokens. r2AccountId = Account ID Cloudflare. Atau isi r2Endpoint langsung.",
+  "r2AccountId": "GANTI_ACCOUNT_ID",
+  "r2Endpoint": "",
+  "r2AccessKeyId": "GANTI_ACCESS_KEY_ID",
+  "r2SecretAccessKey": "GANTI_SECRET_ACCESS_KEY",
+  "r2Bucket": "abb-star-reward-photos"
+}

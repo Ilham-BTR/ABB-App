@@ -8,3 +8,4 @@ supabase/.temp
 
 # migrasi (kredensial)
 scripts/migrate.config.json
+scripts/pindah.config.json

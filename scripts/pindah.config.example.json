@@ -1,0 +1,8 @@
+{
+  "_comment": "Copy jadi pindah.config.json (sudah di-gitignore) lalu isi. JANGAN commit.",
+  "_dari": "Project Supabase BARU -> Project Settings -> API. Pakai SECRET/service_role key.",
+  "newSupabaseUrl": "https://project-baru.supabase.co",
+  "newServiceRoleKey": "GANTI_SERVICE_ROLE_KEY_PROJECT_BARU",
+  "_password": "Password sementara untuk SEMUA akun yang dibuat ulang. Ganti setelah login pertama.",
+  "defaultPassword": "AbbStar#2026"
+}

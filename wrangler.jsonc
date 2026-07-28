@@ -1,0 +1,16 @@
+{
+  // Konfigurasi Cloudflare Workers (Static Assets) — dipakai HANYA kalau
+  // deploy lewat flow "Workers" (bukan "Pages").
+  //
+  // Kalau deploy lewat Cloudflare Pages, file ini diabaikan; cukup set
+  // Build command: npm run build  dan  Output directory: dist
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "abb-app",
+  "compatibility_date": "2026-07-28",
+  "assets": {
+    "directory": "./dist",
+    // SPA: semua rute yang tidak cocok file statis dilayani index.html
+    // supaya deep link (mis. /admin/dashboard) tidak 404.
+    "not_found_handling": "single-page-application"
+  }
+}

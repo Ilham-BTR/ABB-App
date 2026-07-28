@@ -5,18 +5,21 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const nav = useNavigate();
-  const { session, role } = useAuth();
+  const { session, role, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Kalau sudah login, arahkan sesuai role.
+  // Tunggu sampai role selesai dimuat (authLoading false) — kalau tidak,
+  // admin akan sempat dianggap non-admin dan dilempar ke halaman MD.
   useEffect(() => {
-    if (!session) return;
-    if (role === "admin" || role === "superadmin") nav("/admin/dashboard", { replace: true });
+    if (!session || authLoading) return;
+    if (role === "admin" || role === "superadmin")
+      nav("/admin/dashboard", { replace: true });
     else nav("/", { replace: true });
-  }, [session, role, nav]);
+  }, [session, role, authLoading, nav]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +30,7 @@ export default function Login() {
       setError("Email atau password salah.");
       setLoading(false);
     }
-    // redirect ditangani useEffect di atas setelah session terisi.
+    // redirect ditangani useEffect di atas setelah session + role terisi.
   }
 
   return (

@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -6,8 +6,9 @@ import { OfflineSync } from "@/components/OfflineSync";
 
 // Shell area FOS (MD): header brand + antrian offline + isi halaman.
 export default function AppLayout() {
-  const { session, fullName } = useAuth();
+  const { session, fullName, role } = useAuth();
   const name = fullName || session?.user?.email;
+  const isAdmin = role === "admin" || role === "superadmin";
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-slate-100">
@@ -27,6 +28,16 @@ export default function AppLayout() {
       </header>
       <main className="px-4 py-5">
         <OfflineSync />
+        {/* Admin yang mendarat di halaman MD tetap punya jalan ke panel admin. */}
+        {isAdmin && (
+          <Link
+            to="/admin/dashboard"
+            className="mb-4 flex items-center justify-between rounded-xl border border-brand/30 bg-white px-4 py-3 text-sm font-semibold text-brand shadow-sm transition hover:bg-brand/5"
+          >
+            Buka Panel Admin
+            <span aria-hidden>›</span>
+          </Link>
+        )}
         <Outlet />
       </main>
     </div>

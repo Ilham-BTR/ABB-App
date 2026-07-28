@@ -109,7 +109,19 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================================
--- 3. ROW LEVEL SECURITY
+-- 3. HAK AKSES DATA API (PostgREST)
+-- Eksplisit, supaya schema ini tetap jalan walau opsi
+-- "Automatically expose new tables" dimatikan saat buat project.
+-- Keamanan sesungguhnya tetap ditegakkan oleh RLS di bawah.
+-- ============================================================
+
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.stores   to authenticated;
+grant select, insert, update, delete on public.visits   to authenticated;
+
+-- ============================================================
+-- 4. ROW LEVEL SECURITY
 -- ============================================================
 
 alter table public.profiles enable row level security;

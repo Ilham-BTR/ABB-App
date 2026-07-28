@@ -30,14 +30,27 @@ Catat lokasi file JSON yang dihasilkan — dipakai di langkah 4.
 ## 2. Cloudflare R2
 
 1. Cloudflare → **R2** → **Create bucket** → nama: `abb-star-reward-photos` → **Create**.
-2. Buka bucket → **Settings** → **Public access → Custom Domains → Connect Domain**
-   → `img.abb-form.click` → **Continue**.
-   *(Kalau domain belum di Cloudflare: aktifkan **r2.dev subdomain** saja dulu,
-   URL-nya dipakai sebagai `VITE_R2_PUBLIC_URL`.)*
-3. R2 → **Manage R2 API Tokens** → **Create API token** → **Object Read & Write**
+2. Buka bucket → **Settings** → **Public Development URL** → **Enable**.
+   Muncul URL `https://pub-xxxxx.r2.dev` → itu jadi `VITE_R2_PUBLIC_URL`.
+   *(Untuk produksi, lebih baik pasang **Custom Domain** mis. `img.abb-form.click`.)*
+3. **WAJIB — CORS Policy.** Masih di Settings → **CORS Policy** → **+ Add** → tempel:
+   ```json
+   [
+     {
+       "AllowedOrigins": ["*"],
+       "AllowedMethods": ["GET", "PUT", "HEAD"],
+       "AllowedHeaders": ["*"],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+   Tanpa ini, upload foto dari browser **akan ditolak** (browser memblokir PUT lintas-origin).
+   Setelah URL app final diketahui, persempit `AllowedOrigins` ke URL itu.
+4. R2 → **Manage R2 API Tokens** → **Create API token** → **Object Read & Write**
    → pilih bucket tadi → **Create**.
    **Catat: Access Key ID + Secret Access Key** (secret hanya tampil sekali!)
-   dan **Account ID** (ada di sidebar R2).
+   dan **Account ID** (ada di sidebar R2 / di URL dashboard).
 
 ## 3. Project Supabase baru
 

@@ -9,3 +9,11 @@ supabase/.temp
 # migrasi (kredensial)
 scripts/migrate.config.json
 scripts/pindah.config.json
+
+# backup (berisi service_role key & data — JANGAN commit)
+ops/backup/backup.config.json
+ops/backup/dumps/
+ops/backup/backup.log
+ops/backup/node_modules/
+ops/backup/package.json
+ops/backup/package-lock.json

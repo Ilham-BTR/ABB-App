@@ -1,0 +1,15 @@
+{
+  "_comment": "Copy file ini jadi backup.config.json (tanpa .example) lalu isi. File asli SUDAH di-gitignore — JANGAN commit yang berisi service_role key.",
+  "_dari": "serviceRoleKey ada di Supabase Dashboard -> Project Settings -> API Keys. PAKAI service_role key (rahasia, bukan anon) supaya bisa baca SEMUA data + akun auth.",
+  "_project": "supabaseUrl di bawah sudah diisi project ABB Star Reward yang aktif (abb-star-reward). Ganti hanya kalau project-nya pindah lagi.",
+  "supabaseUrl": "https://vyoyhurpqnwhmlemjzrc.supabase.co",
+  "serviceRoleKey": "GANTI_SERVICE_ROLE_KEY",
+  "keepLast": 12,
+  "_backupDir": "SATU folder simpan backup. Kosongkan = ./dumps. Isi folder OneDrive/Google Drive tersinkron untuk salinan off-site.",
+  "backupDir": "",
+  "_backupDirs": "ATAU pakai ini untuk simpan ke BANYAK folder sekaligus (OneDrive + D: lokal). Kalau ini diisi, 'backupDir' di atas diabaikan. Ingat: pakai \\\\ (dobel backslash) di path Windows.",
+  "backupDirs": [
+    "C:\\Users\\Ilham_PC\\OneDrive\\ABB\\backups",
+    "D:\\Backup\\ABB"
+  ]
+}

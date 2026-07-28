@@ -1,6 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
+  const { role } = useAuth();
+
+  // Admin/superadmin yang membuka "/" langsung diarahkan ke panel admin
+  // (mis. saat sesi masih tersimpan, jadi tidak lewat halaman login).
+  if (role === "admin" || role === "superadmin")
+    return <Navigate to="/admin/dashboard" replace />;
+
   return (
     <div className="space-y-3">
       <h2 className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">

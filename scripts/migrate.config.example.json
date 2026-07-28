@@ -1,12 +1,17 @@
 {
-  "_comment": "Copy jadi migrate.config.json (sudah di-gitignore) lalu isi. JANGAN commit yang berisi kredensial.",
-  "supabaseUrl": "https://your-project-ref.supabase.co",
-  "serviceRoleKey": "GANTI_SERVICE_ROLE_KEY",
+  "_comment": "Copy jadi migrate.config.json (sudah di-gitignore) lalu isi. JANGAN commit.",
 
-  "_r2": "Dari Cloudflare R2 -> Manage API Tokens. r2AccountId = Account ID Cloudflare. Atau isi r2Endpoint langsung.",
-  "r2AccountId": "GANTI_ACCOUNT_ID",
-  "r2Endpoint": "",
-  "r2AccessKeyId": "GANTI_ACCESS_KEY_ID",
-  "r2SecretAccessKey": "GANTI_SECRET_ACCESS_KEY",
+  "_source": "Project Supabase LAMA — tempat file foto masih tersimpan (Storage).",
+  "sourceSupabaseUrl": "https://uvhtowutaroeqmavhmxn.supabase.co",
+  "sourceServiceRoleKey": "GANTI_SERVICE_ROLE_KEY_PROJECT_LAMA",
+
+  "_dest": "Project Supabase BARU — tempat DB sekarang (kolom foto di-update di sini).",
+  "destSupabaseUrl": "https://vyoyhurpqnwhmlemjzrc.supabase.co",
+  "destServiceRoleKey": "GANTI_SERVICE_ROLE_KEY_PROJECT_BARU",
+
+  "_r2": "Kredensial Cloudflare R2 (sama seperti yang dipakai SETUP-R2).",
+  "r2AccountId": "6230d5b0d8a1e8194439fd832d9e3c03",
+  "r2AccessKeyId": "GANTI_R2_ACCESS_KEY_ID",
+  "r2SecretAccessKey": "GANTI_R2_SECRET_ACCESS_KEY",
   "r2Bucket": "abb-star-reward-photos"
 }

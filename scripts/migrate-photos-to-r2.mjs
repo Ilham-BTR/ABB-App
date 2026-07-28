@@ -1,16 +1,20 @@
 // ============================================================
-// Migrasi foto lama: Supabase Storage -> Cloudflare R2.
+// Migrasi foto lama: Supabase Storage (project LAMA) -> Cloudflare R2.
 //
-// Untuk tiap kolom foto di DB: unduh file dari Supabase Storage, unggah ke R2
-// dengan key yang sama (diberi prefix bucket), lalu update kolom di DB jadi key R2.
-// File lama di Supabase TIDAK dihapus (tetap jadi cadangan).
+// File foto ada di Storage project LAMA, sedangkan DB sudah pindah ke project
+// BARU. Jadi skrip ini memakai DUA koneksi Supabase:
+//   - source : project LAMA  -> tempat mengunduh file
+//   - dest   : project BARU  -> tempat membaca & meng-update kolom foto
 //
-// Aman diulang (idempoten): baris yang nilainya sudah berupa key R2 dilewati.
+// Alur per foto: unduh dari Storage lama -> unggah ke R2 (key diberi prefix
+// nama bucket) -> update kolom di DB baru. File lama TIDAK dihapus.
+//
+// Aman diulang (idempoten): nilai yang sudah berupa key R2 dilewati.
 //
 // Jalankan lokal:
 //   1) copy migrate.config.example.json -> migrate.config.json, isi kredensial
 //   2) npm install @supabase/supabase-js @aws-sdk/client-s3
-//   3) node scripts/migrate-photos-to-r2.mjs            (tambah --dry-run untuk cek dulu)
+//   3) node scripts/migrate-photos-to-r2.mjs        (tambah --dry-run untuk cek)
 // ============================================================
 import { createClient } from "@supabase/supabase-js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -29,7 +33,27 @@ if (!existsSync(cfgPath)) {
 const cfg = JSON.parse(readFileSync(cfgPath, "utf8"));
 const dryRun = process.argv.includes("--dry-run");
 
-const supabase = createClient(cfg.supabaseUrl, cfg.serviceRoleKey, {
+const need = [
+  "sourceSupabaseUrl",
+  "sourceServiceRoleKey",
+  "destSupabaseUrl",
+  "destServiceRoleKey",
+  "r2AccountId",
+  "r2AccessKeyId",
+  "r2SecretAccessKey",
+  "r2Bucket",
+];
+const missing = need.filter((k) => !cfg[k] || /^GANTI_/.test(String(cfg[k])));
+if (missing.length) {
+  console.error(`Config belum lengkap. Isi dulu: ${missing.join(", ")}`);
+  process.exit(1);
+}
+
+// Sumber FILE = project lama (Storage). Tujuan DB = project baru.
+const source = createClient(cfg.sourceSupabaseUrl, cfg.sourceServiceRoleKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+const dest = createClient(cfg.destSupabaseUrl, cfg.destServiceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
@@ -43,54 +67,77 @@ const s3 = new S3Client({
   },
 });
 
-// Kolom foto: [tabel, kolom, bucket asal di Supabase]
+// Kolom foto yang perlu dipindahkan.
 const TARGETS = [
-  ["visits", "selfie_url", "visit-photos"],
-  ["visits", "store_photo_url", "visit-photos"],
-  ["visits", "store_photo_url_2", "visit-photos"],
-  ["visits", "activity_photo_url", "visit-photos"],
-  ["visits", "activity_photo_url_2", "visit-photos"],
-  ["stores", "front_photo_url", "store-photos"],
+  ["visits", "selfie_url"],
+  ["visits", "store_photo_url"],
+  ["visits", "store_photo_url_2"],
+  ["visits", "activity_photo_url"],
+  ["visits", "activity_photo_url_2"],
+  ["stores", "front_photo_url"],
 ];
+
+// Foto lama bisa berada di salah satu bucket ini — dicoba berurutan.
+const BUCKETS = ["visit-photos", "store-photos"];
+const alreadyMigrated = (v) =>
+  BUCKETS.some((b) => v.startsWith(`${b}/`)) || /^https?:\/\//i.test(v);
 
 let migrated = 0;
 let skipped = 0;
 let failed = 0;
+const failures = [];
 
-for (const [table, column, bucket] of TARGETS) {
-  console.log(`\n== ${table}.${column} (bucket: ${bucket}) ==`);
-  const { data: rows, error } = await supabase
+console.log(`Sumber file : ${cfg.sourceSupabaseUrl}`);
+console.log(`Tujuan DB   : ${cfg.destSupabaseUrl}`);
+console.log(`Bucket R2   : ${cfg.r2Bucket}`);
+if (dryRun) console.log("\n*** DRY-RUN — tidak ada yang dipindahkan ***");
+
+for (const [table, column] of TARGETS) {
+  const { data: rows, error } = await dest
     .from(table)
     .select(`id, ${column}`)
     .not(column, "is", null);
   if (error) {
-    console.error(`  Gagal baca ${table}: ${error.message}`);
+    console.error(`\n== ${table}.${column} == gagal baca: ${error.message}`);
     failed++;
     continue;
   }
 
-  for (const row of rows ?? []) {
-    const value = row[column];
-    if (!value) continue;
-    // Sudah key R2 (mengandung prefix bucket) -> lewati.
-    if (value.startsWith(`${bucket}/`) || /^https?:\/\//i.test(value)) {
-      skipped++;
-      continue;
-    }
+  const all = rows ?? [];
+  const todo = all.filter((r) => r[column] && !alreadyMigrated(r[column]));
+  skipped += all.length - todo.length;
+  console.log(
+    `\n== ${table}.${column} == perlu dipindah: ${todo.length}, dilewati: ${
+      all.length - todo.length
+    }`
+  );
 
-    const newKey = `${bucket}/${value}`;
+  for (const row of todo) {
+    const value = row[column];
+
     if (dryRun) {
-      console.log(`  [dry] ${value} -> ${newKey}`);
+      console.log(`  [dry] ${value}`);
       migrated++;
       continue;
     }
 
     try {
-      // 1) Unduh dari Supabase Storage.
-      const { data: blob, error: dlErr } = await supabase.storage
-        .from(bucket)
-        .download(value);
-      if (dlErr || !blob) throw new Error(dlErr?.message || "download gagal");
+      // 1) Unduh dari Storage project LAMA — coba tiap bucket.
+      let blob = null;
+      let foundBucket = null;
+      for (const b of BUCKETS) {
+        const { data, error: dlErr } = await source.storage
+          .from(b)
+          .download(value);
+        if (!dlErr && data) {
+          blob = data;
+          foundBucket = b;
+          break;
+        }
+      }
+      if (!blob) throw new Error("file tidak ada di Storage project lama");
+
+      const newKey = `${foundBucket}/${value}`;
       const body = Buffer.from(await blob.arrayBuffer());
 
       // 2) Unggah ke R2.
@@ -103,23 +150,29 @@ for (const [table, column, bucket] of TARGETS) {
         })
       );
 
-      // 3) Update kolom DB jadi key R2.
-      const { error: upErr } = await supabase
+      // 3) Update kolom di DB project BARU.
+      const { error: upErr } = await dest
         .from(table)
         .update({ [column]: newKey })
         .eq("id", row.id);
       if (upErr) throw new Error(upErr.message);
 
       migrated++;
-      process.stdout.write(`\r  migrasi: ${migrated} file`);
+      process.stdout.write(`\r  dipindah: ${migrated} file`);
     } catch (e) {
       failed++;
-      console.error(`\n  GAGAL ${value}: ${e.message}`);
+      failures.push(`${table}.${column} | ${value} | ${e.message}`);
     }
   }
 }
 
 console.log(
-  `\n\nSelesai. Migrasi: ${migrated} · Dilewati (sudah R2): ${skipped} · Gagal: ${failed}`
+  `\n\n============================================================` +
+    `\nSelesai. Dipindah: ${migrated} · Dilewati: ${skipped} · Gagal: ${failed}` +
+    `\n============================================================`
 );
-if (dryRun) console.log("(DRY-RUN — tidak ada yang benar-benar dipindahkan)");
+if (failures.length) {
+  console.log(`\nDaftar gagal (${failures.length}, tampil maks 10):`);
+  failures.slice(0, 10).forEach((f) => console.log(`  - ${f}`));
+}
+if (dryRun) console.log("\n(DRY-RUN — tidak ada perubahan)");

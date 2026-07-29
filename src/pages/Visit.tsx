@@ -5,6 +5,7 @@ import { compressImage } from "@/lib/upload";
 import { submitVisit, type SubmitPayload } from "@/lib/visitSubmit";
 import { addToQueue } from "@/lib/offlineQueue";
 import { Button } from "@/components/Button";
+import { AlertDialog } from "@/components/AlertDialog";
 import { PhotoInput } from "@/components/PhotoInput";
 import { MultiPhotoInput } from "@/components/MultiPhotoInput";
 import { GpsButton } from "@/components/GpsButton";
@@ -21,6 +22,9 @@ export default function Visit() {
   const nav = useNavigate();
 
   const [selection, setSelection] = useState<StoreSelection>(null);
+  // Naikkan untuk me-remount StoreField (mengembalikannya ke mode pencarian).
+  const [storeFieldKey, setStoreFieldKey] = useState(0);
+  const [finalDialog, setFinalDialog] = useState(false);
   const [visitDate, setVisitDate] = useState("");
   const [visitResult, setVisitResult] = useState<VisitResult | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
@@ -61,6 +65,18 @@ export default function Visit() {
     selection?.mode === "existing" && !storeFinal
       ? missingStoreDetails(selection.store, selection.details)
       : [];
+
+  // Toko final: beri tahu MD begitu dipilih, jangan tunggu sampai submit.
+  useEffect(() => {
+    if (storeFinal) setFinalDialog(true);
+  }, [storeFinal]);
+
+  function pickAnotherStore() {
+    setFinalDialog(false);
+    setError(null);
+    setSelection(null);
+    setStoreFieldKey((k) => k + 1);
+  }
 
   const storeReady =
     selection?.mode === "existing"
@@ -183,9 +199,7 @@ export default function Visit() {
           return;
         }
         if (msg === "STORE_ALREADY_ACTIVE") {
-          setError(
-            "Toko ini sudah berstatus Yes, Active — status final. Kunjungan tidak bisa diinput lagi."
-          );
+          setFinalDialog(true);
           setLoading(false);
           return;
         }
@@ -199,7 +213,13 @@ export default function Visit() {
         throw err; // error nyata (bukan jaringan) → tampilkan
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menyimpan kunjungan.");
+      const msg = err instanceof Error ? err.message : "";
+      // Jaring pengaman: kode dari trigger database jangan sampai tampil mentah.
+      if (msg === "STORE_ALREADY_ACTIVE") {
+        setFinalDialog(true);
+      } else {
+        setError(msg || "Gagal menyimpan kunjungan.");
+      }
       setLoading(false);
     }
   }
@@ -228,7 +248,7 @@ export default function Visit() {
         />
       </label>
 
-      <StoreField onChange={setSelection} />
+      <StoreField key={storeFieldKey} onChange={setSelection} />
 
       <GpsButton value={gps} onChange={setGps} required autoLoad />
 
@@ -286,13 +306,6 @@ export default function Visit() {
         </p>
       )}
 
-      {storeFinal && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          Toko ini sudah <strong>Yes, Active</strong> — status final. Kunjungan
-          tidak bisa diinput. Pilih toko lain untuk melanjutkan.
-        </p>
-      )}
-
       {missingDetails.length > 0 && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           Lengkapi data toko dulu: <strong>{missingDetails.join(", ")}</strong>.
@@ -303,6 +316,28 @@ export default function Visit() {
       <Button type="submit" loading={loading} disabled={!canSubmit}>
         Simpan Kunjungan
       </Button>
+
+      <AlertDialog
+        open={finalDialog}
+        tone="success"
+        title="Toko Sudah Aktif"
+        actionLabel="Pilih Toko Lain"
+        onAction={pickAnotherStore}
+      >
+        <p>
+          {selection?.mode === "existing" && (
+            <strong className="text-slate-700">{selection.store.name}</strong>
+          )}{" "}
+          sudah berstatus <strong className="text-emerald-700">Yes, Active</strong>.
+        </p>
+        <p className="mt-2">
+          Yes, Active adalah status final — kunjungan untuk toko ini sudah
+          selesai dan tidak perlu dicatat lagi.
+        </p>
+        <p className="mt-2 text-xs text-slate-400">
+          Kalau statusnya keliru, hubungi admin untuk memperbaiki.
+        </p>
+      </AlertDialog>
     </form>
   );
 }

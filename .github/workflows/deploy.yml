@@ -1,12 +1,15 @@
 # Build + deploy otomatis ke Cloudflare Workers setiap ada push ke main.
 # Tidak ada lagi langkah `npm run deploy` manual di komputer.
 #
-# Perlu 5 secret di GitHub (Settings > Secrets and variables > Actions):
+# Perlu secret di GitHub (Settings > Secrets and variables > Actions):
 #   CLOUDFLARE_API_TOKEN    - token "Edit Cloudflare Workers"
 #   CLOUDFLARE_ACCOUNT_ID   - ID akun Cloudflare
 #   VITE_SUPABASE_URL       - URL project Supabase
 #   VITE_SUPABASE_ANON_KEY  - anon/publishable key (aman, dilindungi RLS)
 #   VITE_R2_PUBLIC_URL      - https://img.abb-form.click
+#   SUPABASE_DB_URL         - (opsional) connection string Postgres, supaya
+#                             file di supabase/migrations/ ikut dijalankan
+#                             otomatis. Kalau kosong, langkah migrasi dilewati.
 #
 # Catatan: VITE_* ikut ter-bundle ke file JS yang publik — memang begitu
 # sifatnya, karena dibaca browser. Yang benar-benar rahasia (service_role key,
@@ -30,6 +33,40 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Migrasi dijalankan SEBELUM deploy supaya database sudah siap saat
+      # kode baru live. Tiap file dicatat di public.schema_migrations, jadi
+      # sekali jalan saja walau workflow dipicu berkali-kali.
+      - name: Jalankan migrasi Supabase
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_URL:-}" ]; then
+            echo "SUPABASE_DB_URL belum diisi — migrasi dilewati."
+            exit 0
+          fi
+          command -v psql >/dev/null || {
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          }
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -q -c \
+            "create table if not exists public.schema_migrations (
+               name text primary key,
+               applied_at timestamptz not null default now()
+             );"
+          for f in supabase/migrations/*.sql; do
+            [ -e "$f" ] || continue
+            n=$(basename "$f")
+            if [ "$(psql "$DB_URL" -tAc \
+                 "select 1 from public.schema_migrations where name = '$n'")" = "1" ]; then
+              echo "sudah pernah dijalankan: $n"
+              continue
+            fi
+            echo "menjalankan: $n"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -q -1 -f "$f"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -q -c \
+              "insert into public.schema_migrations (name) values ('$n');"
+          done
 
       - name: Build
         env:

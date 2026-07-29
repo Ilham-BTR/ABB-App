@@ -24,6 +24,14 @@ export function registerStatusLabel(value: string | null): string {
   return REGISTER_STATUS_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
 
+// "Yes, Active" = status FINAL. Toko yang sudah aktif tidak dikunjungi lagi
+// oleh MD; hanya admin yang boleh mengubahnya (mis. koreksi salah input).
+export const FINAL_STATUS: RegisterStatus = "sudah_aktif";
+
+export function isFinalStatus(value: string | null | undefined): boolean {
+  return value === FINAL_STATUS;
+}
+
 // Warna (hex) per status — dipakai di Coverage Map & legend dashboard.
 export const STATUS_COLOR: Record<string, string> = {
   sudah_aktif: "#16a34a",

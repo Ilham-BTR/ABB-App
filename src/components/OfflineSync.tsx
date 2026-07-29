@@ -7,6 +7,8 @@ import { submitVisit } from "@/lib/visitSubmit";
 export function OfflineSync({ onSynced }: { onSynced?: () => void }) {
   const [pending, setPending] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  // Kunjungan yang dibuang karena tokonya keburu berstatus final.
+  const [droppedActive, setDroppedActive] = useState(0);
 
   const sync = useCallback(async () => {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -21,6 +23,7 @@ export function OfflineSync({ onSynced }: { onSynced?: () => void }) {
       const uid = session?.user?.id;
       const items = await getAllQueued();
       let sent = 0;
+      let dropped = 0;
       for (const item of items) {
         if (uid && item.fosId !== uid) continue; // hanya milik user ini
         try {
@@ -28,15 +31,21 @@ export function OfflineSync({ onSynced }: { onSynced?: () => void }) {
           await removeFromQueue(item.id);
           sent++;
         } catch (e) {
-          // Duplikat (toko sudah dikunjungi tanggal itu) → buang dari antrian.
-          if (e instanceof Error && e.message === "VISIT_DUPLICATE") {
+          // Antrian yang tidak akan pernah bisa masuk → buang, jangan diulang
+          // selamanya: duplikat tanggal, atau toko sudah berstatus final.
+          const msg = e instanceof Error ? e.message : "";
+          if (msg === "VISIT_DUPLICATE") {
             await removeFromQueue(item.id);
+          } else if (msg === "STORE_ALREADY_ACTIVE") {
+            await removeFromQueue(item.id);
+            dropped++;
           }
           // error lain: biarkan di antrian, coba lagi nanti
         }
       }
       const left = await getAllQueued();
       setPending(left.length);
+      if (dropped > 0) setDroppedActive((n) => n + dropped);
       if (sent > 0) onSynced?.();
     } finally {
       setSyncing(false);
@@ -54,21 +63,40 @@ export function OfflineSync({ onSynced }: { onSynced?: () => void }) {
     };
   }, [sync]);
 
-  if (pending === 0) return null;
+  if (pending === 0 && droppedActive === 0) return null;
 
   return (
-    <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-      <span>
-        {pending} kunjungan menunggu terkirim
-        {syncing ? " — mengirim…" : ""}
-      </span>
-      <button
-        onClick={sync}
-        disabled={syncing}
-        className="shrink-0 rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold text-amber-700 disabled:opacity-50"
-      >
-        Kirim sekarang
-      </button>
-    </div>
+    <>
+      {pending > 0 && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span>
+            {pending} kunjungan menunggu terkirim
+            {syncing ? " — mengirim…" : ""}
+          </span>
+          <button
+            onClick={sync}
+            disabled={syncing}
+            className="shrink-0 rounded-md border border-amber-400 px-2 py-1 text-xs font-semibold text-amber-700 disabled:opacity-50"
+          >
+            Kirim sekarang
+          </button>
+        </div>
+      )}
+
+      {droppedActive > 0 && (
+        <div className="mb-3 flex items-start justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          <span>
+            {droppedActive} kunjungan offline tidak jadi terkirim: tokonya sudah
+            berstatus <strong>Yes, Active</strong> (status final).
+          </span>
+          <button
+            onClick={() => setDroppedActive(0)}
+            className="shrink-0 rounded-md border border-emerald-400 px-2 py-1 text-xs font-semibold text-emerald-700"
+          >
+            OK
+          </button>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { FormField } from "@/components/FormField";
-import type { Store } from "@/lib/types";
+import { isFinalStatus, type Store } from "@/lib/types";
 
 export type NewStoreData = {
   name: string;
@@ -39,6 +39,24 @@ function detailsFromStore(s: Store): StoreDetails {
     ownerName: s.owner_name ?? "",
     distributor: s.distributor ?? "",
   };
+}
+
+// Data toko yang masih kosong di database WAJIB dilengkapi MD saat kunjungan.
+// Distributor dikecualikan (tetap opsional).
+const REQUIRED_DETAILS = [
+  { key: "address", label: "Alamat", of: (s: Store) => s.address },
+  { key: "phone", label: "No. Telp", of: (s: Store) => s.phone },
+  { key: "ownerName", label: "Owner / Sales", of: (s: Store) => s.owner_name },
+] as const;
+
+/** Field wajib yang masih kosong — dipakai form untuk mengunci tombol simpan. */
+export function missingStoreDetails(
+  store: Store,
+  details: StoreDetails
+): string[] {
+  return REQUIRED_DETAILS.filter(
+    (f) => !(f.of(store) ?? "").trim() && !details[f.key].trim()
+  ).map((f) => f.label);
 }
 
 // Satu kolom "Toko" pintar: cari toko terdaftar, atau tambah toko baru.
@@ -162,11 +180,18 @@ export function StoreField({
       ownerName: !(selected.owner_name ?? "").trim(),
       distributor: !(selected.distributor ?? "").trim(),
     };
+    const finalStatus = isFinalStatus(selected.register_status);
 
     return (
       <div>
         <Label />
-        <div className="rounded-lg border border-brand bg-brand/5">
+        <div
+          className={`rounded-lg border ${
+            finalStatus
+              ? "border-emerald-300 bg-emerald-50"
+              : "border-brand bg-brand/5"
+          }`}
+        >
           <div className="flex items-center justify-between px-3 py-3">
             <p className="font-medium">{selected.name}</p>
             <button
@@ -178,38 +203,57 @@ export function StoreField({
             </button>
           </div>
 
-          <div className="space-y-3 border-t border-brand/20 px-3 py-3">
-            <p className="text-xs text-gray-500">
-              Data yang masih kosong bisa dilengkapi (opsional). Data yang sudah
-              ada tidak bisa diubah.
-            </p>
-            <DetailField
-              label="Alamat"
-              empty={isEmpty.address}
-              value={details.address}
-              onChange={(v) => updateDetails({ address: v })}
-            />
-            <DetailField
-              label="No. Telp"
-              empty={isEmpty.phone}
-              value={details.phone}
-              onChange={(v) => updateDetails({ phone: v })}
-              type="tel"
-              inputMode="numeric"
-            />
-            <DetailField
-              label="Owner / Sales (nama)"
-              empty={isEmpty.ownerName}
-              value={details.ownerName}
-              onChange={(v) => updateDetails({ ownerName: v })}
-            />
-            <DetailField
-              label="Distributor"
-              empty={isEmpty.distributor}
-              value={details.distributor}
-              onChange={(v) => updateDetails({ distributor: v })}
-            />
-          </div>
+          {/* Status final: kunjungan tidak perlu (dan tidak bisa) dicatat lagi. */}
+          {finalStatus ? (
+            <div className="border-t border-emerald-200 px-3 py-3">
+              <p className="text-sm font-semibold text-emerald-800">
+                ✅ Toko ini sudah <strong>Yes, Active</strong>
+              </p>
+              <p className="mt-1 text-sm text-emerald-700">
+                Yes, Active adalah status final — kunjungan untuk toko ini sudah
+                selesai dan tidak bisa diinput lagi. Silakan pilih toko lain.
+              </p>
+              <p className="mt-1.5 text-xs text-emerald-600">
+                Kalau statusnya keliru, hubungi admin untuk memperbaiki.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 border-t border-brand/20 px-3 py-3">
+              <p className="text-xs text-gray-500">
+                Data yang masih kosong <strong>wajib dilengkapi</strong> (kecuali
+                Distributor). Data yang sudah ada tidak bisa diubah.
+              </p>
+              <DetailField
+                label="Alamat"
+                empty={isEmpty.address}
+                required
+                value={details.address}
+                onChange={(v) => updateDetails({ address: v })}
+              />
+              <DetailField
+                label="No. Telp"
+                empty={isEmpty.phone}
+                required
+                value={details.phone}
+                onChange={(v) => updateDetails({ phone: v })}
+                type="tel"
+                inputMode="numeric"
+              />
+              <DetailField
+                label="Owner / Sales (nama)"
+                empty={isEmpty.ownerName}
+                required
+                value={details.ownerName}
+                onChange={(v) => updateDetails({ ownerName: v })}
+              />
+              <DetailField
+                label="Distributor"
+                empty={isEmpty.distributor}
+                value={details.distributor}
+                onChange={(v) => updateDetails({ distributor: v })}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -321,7 +365,15 @@ export function StoreField({
                   onClick={() => pickExisting(store)}
                   className="block w-full border-b border-gray-100 px-3 py-3 text-left hover:bg-gray-50"
                 >
-                  <p className="font-medium">{store.name}</p>
+                  <p className="font-medium">
+                    {store.name}
+                    {/* Tandai sejak di daftar supaya MD tidak terlanjur memilih. */}
+                    {isFinalStatus(store.register_status) && (
+                      <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                        Yes, Active — selesai
+                      </span>
+                    )}
+                  </p>
                   {store.address && (
                     <p className="text-sm text-gray-500">{store.address}</p>
                   )}
@@ -353,10 +405,11 @@ function Label() {
   );
 }
 
-// Field detail toko: kalau kosong -> bisa diisi; kalau sudah ada -> read-only abu-abu.
+// Field detail toko: kalau kosong -> wajib diisi; kalau sudah ada -> read-only abu-abu.
 function DetailField({
   label,
   empty,
+  required,
   value,
   onChange,
   type,
@@ -364,15 +417,18 @@ function DetailField({
 }: {
   label: string;
   empty: boolean;
+  required?: boolean;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   inputMode?: "numeric";
 }) {
+  const mustFill = !!required && empty;
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">
         {label}
+        {mustFill && <span className="text-red-500"> *</span>}
       </span>
       {empty ? (
         <input
@@ -380,7 +436,8 @@ function DetailField({
           inputMode={inputMode}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Belum ada — bisa diisi"
+          required={mustFill}
+          placeholder={mustFill ? "Wajib diisi" : "Belum ada — bisa diisi"}
           className="input"
         />
       ) : (

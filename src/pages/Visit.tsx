@@ -8,10 +8,14 @@ import { Button } from "@/components/Button";
 import { PhotoInput } from "@/components/PhotoInput";
 import { MultiPhotoInput } from "@/components/MultiPhotoInput";
 import { GpsButton } from "@/components/GpsButton";
-import { StoreField, type StoreSelection } from "@/components/StoreField";
+import {
+  StoreField,
+  missingStoreDetails,
+  type StoreSelection,
+} from "@/components/StoreField";
 import { VisitResultRadio } from "@/components/VisitResultRadio";
 import type { LatLng } from "@/lib/geo";
-import { registerStatusLabel, type VisitResult } from "@/lib/types";
+import { isFinalStatus, registerStatusLabel, type VisitResult } from "@/lib/types";
 
 export default function Visit() {
   const nav = useNavigate();
@@ -47,9 +51,20 @@ export default function Visit() {
       ? "New (toko baru)"
       : "-";
 
+  // Toko yang sudah "Yes, Active" = status final → kunjungan tidak bisa dicatat lagi.
+  const storeFinal =
+    selection?.mode === "existing" &&
+    isFinalStatus(selection.store.register_status);
+
+  // Data toko yang masih kosong di database wajib dilengkapi MD (selain Distributor).
+  const missingDetails =
+    selection?.mode === "existing" && !storeFinal
+      ? missingStoreDetails(selection.store, selection.details)
+      : [];
+
   const storeReady =
     selection?.mode === "existing"
-      ? true
+      ? !storeFinal && missingDetails.length === 0
       : selection?.mode === "new"
       ? !!(
           selection.data.name.trim() &&
@@ -167,6 +182,13 @@ export default function Visit() {
           setLoading(false);
           return;
         }
+        if (msg === "STORE_ALREADY_ACTIVE") {
+          setError(
+            "Toko ini sudah berstatus Yes, Active — status final. Kunjungan tidak bisa diinput lagi."
+          );
+          setLoading(false);
+          return;
+        }
         const isNetwork =
           (typeof navigator !== "undefined" && !navigator.onLine) ||
           /fetch|network|failed to fetch|timeout|load failed/i.test(msg);
@@ -261,6 +283,20 @@ export default function Visit() {
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {error}
+        </p>
+      )}
+
+      {storeFinal && (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          Toko ini sudah <strong>Yes, Active</strong> — status final. Kunjungan
+          tidak bisa diinput. Pilih toko lain untuk melanjutkan.
+        </p>
+      )}
+
+      {missingDetails.length > 0 && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Lengkapi data toko dulu: <strong>{missingDetails.join(", ")}</strong>.
+          Data ini masih kosong di database dan wajib diisi.
         </p>
       )}
 

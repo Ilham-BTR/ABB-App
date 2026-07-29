@@ -1,6 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { uploadBlob } from "@/lib/upload";
-import { registerStatusFromResult, type VisitResult } from "@/lib/types";
+import {
+  isFinalStatus,
+  registerStatusFromResult,
+  type VisitResult,
+} from "@/lib/types";
 import type { NewStoreData, StoreDetails } from "@/components/StoreField";
 
 export type SubmitPayload = {
@@ -25,6 +29,21 @@ export type SubmitPayload = {
 // Dipakai baik saat submit online maupun saat sync dari antrian offline.
 export async function submitVisit(p: SubmitPayload): Promise<void> {
   const fid = p.fosId;
+
+  // "Yes, Active" = status final. Dicek ulang di sini (bukan hanya di form)
+  // karena kunjungan offline bisa ter-sync lama setelah diisi — status toko
+  // mungkin sudah berubah jadi aktif oleh MD lain. Cek sebelum upload foto
+  // supaya tidak membuang kuota.
+  if (p.store.mode === "existing") {
+    const { data: cur } = await supabase
+      .from("stores")
+      .select("register_status")
+      .eq("id", p.store.id)
+      .single();
+    if (isFinalStatus((cur as { register_status?: string } | null)?.register_status))
+      throw new Error("STORE_ALREADY_ACTIVE");
+  }
+
   const [selfiePath, storePaths, activityPaths] = await Promise.all([
     uploadBlob("selfie", p.photos.selfie),
     Promise.all(p.photos.store.map((b) => uploadBlob("store", b))),

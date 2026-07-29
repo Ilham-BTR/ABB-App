@@ -182,6 +182,13 @@ create policy "visits_delete_superadmin" on public.visits
   for delete to authenticated using (public.is_superadmin());
 
 -- ============================================================
+-- 5. ATURAN STATUS FINAL
+-- ============================================================
+-- "Yes, Active" dikunci sebagai status final lewat trigger. Isinya ada di
+-- supabase/migrations/0001_final_status_yes_active.sql — jalankan file itu
+-- setelah script ini.
+
+-- ============================================================
 -- SELESAI.
 -- Catatan: foto disimpan di Cloudflare R2 (bukan Supabase Storage),
 -- jadi tidak ada bucket yang perlu dibuat di project ini.

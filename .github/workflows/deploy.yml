@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22 # Wrangler 4 minimal Node 22
           cache: npm
 
       - run: npm ci

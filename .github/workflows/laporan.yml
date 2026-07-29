@@ -1,0 +1,55 @@
+# Menjalankan rekap kunjungan langsung ke database, lalu menampilkan hasilnya
+# di ringkasan run — tanpa perlu membuka SQL Editor Supabase.
+#
+# Query-nya tetap di repo (ops/reports/rekap-kunjungan.sql) supaya bisa
+# ditinjau, dan sesi dikunci read-only supaya tidak mungkin mengubah data.
+#
+# Perlu secret SUPABASE_DB_URL (sama dengan yang dipakai workflow Deploy).
+name: Laporan Kunjungan
+
+on:
+  workflow_dispatch:
+    inputs:
+      dari:
+        description: Tanggal awal (YYYY-MM-DD)
+        required: true
+        default: "2026-07-01"
+      sampai:
+        description: Tanggal akhir (YYYY-MM-DD)
+        required: true
+        default: "2026-07-25"
+
+jobs:
+  laporan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Jalankan rekap
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DARI: ${{ inputs.dari }}
+          SAMPAI: ${{ inputs.sampai }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error::Secret SUPABASE_DB_URL belum diisi."
+            exit 1
+          fi
+          command -v psql >/dev/null || {
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          }
+
+          psql "$DB_URL" -v ON_ERROR_STOP=1 \
+            -v dari="$DARI" -v sampai="$SAMPAI" \
+            -f ops/reports/rekap-kunjungan.sql > hasil.txt
+
+          {
+            echo "## Rekap kunjungan $DARI s/d $SAMPAI"
+            echo
+            echo '```'
+            cat hasil.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          cat hasil.txt

@@ -1,0 +1,44 @@
+# Build + deploy otomatis ke Cloudflare Workers setiap ada push ke main.
+# Tidak ada lagi langkah `npm run deploy` manual di komputer.
+#
+# Perlu 5 secret di GitHub (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN    - token "Edit Cloudflare Workers"
+#   CLOUDFLARE_ACCOUNT_ID   - ID akun Cloudflare
+#   VITE_SUPABASE_URL       - URL project Supabase
+#   VITE_SUPABASE_ANON_KEY  - anon/publishable key (aman, dilindungi RLS)
+#   VITE_R2_PUBLIC_URL      - https://img.abb-form.click
+#
+# Catatan: VITE_* ikut ter-bundle ke file JS yang publik — memang begitu
+# sifatnya, karena dibaca browser. Yang benar-benar rahasia (service_role key,
+# R2 secret key) tidak pernah dipakai di sini.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # bisa dijalankan manual dari tab Actions
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_R2_PUBLIC_URL: ${{ secrets.VITE_R2_PUBLIC_URL }}
+        run: npm run build
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getAllQueued, removeFromQueue } from "@/lib/offlineQueue";
 import { submitVisit } from "@/lib/visitSubmit";
@@ -10,45 +10,58 @@ export function OfflineSync({ onSynced }: { onSynced?: () => void }) {
   // Kunjungan yang dibuang karena tokonya keburu berstatus final.
   const [droppedActive, setDroppedActive] = useState(0);
 
+  // Kunci re-entrant. sync() dipicu dari tiga tempat (saat mount, event
+  // "online", dan interval 60 detik) yang bisa berbarengan. State `syncing`
+  // tidak bisa dipakai sebagai penjaga karena update state React tidak
+  // langsung terlihat oleh pemanggil kedua — dua sync bisa membaca antrian
+  // yang sama lalu mengirim item yang sama dua kali.
+  const running = useRef(false);
+
   const sync = useCallback(async () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setPending((await getAllQueued()).length);
-      return;
-    }
-    setSyncing(true);
+    if (running.current) return;
+    running.current = true;
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const uid = session?.user?.id;
-      const items = await getAllQueued();
-      let sent = 0;
-      let dropped = 0;
-      for (const item of items) {
-        if (uid && item.fosId !== uid) continue; // hanya milik user ini
-        try {
-          await submitVisit(item);
-          await removeFromQueue(item.id);
-          sent++;
-        } catch (e) {
-          // Antrian yang tidak akan pernah bisa masuk → buang, jangan diulang
-          // selamanya: duplikat tanggal, atau toko sudah berstatus final.
-          const msg = e instanceof Error ? e.message : "";
-          if (msg === "VISIT_DUPLICATE") {
-            await removeFromQueue(item.id);
-          } else if (msg === "STORE_ALREADY_ACTIVE") {
-            await removeFromQueue(item.id);
-            dropped++;
-          }
-          // error lain: biarkan di antrian, coba lagi nanti
-        }
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        setPending((await getAllQueued()).length);
+        return;
       }
-      const left = await getAllQueued();
-      setPending(left.length);
-      if (dropped > 0) setDroppedActive((n) => n + dropped);
-      if (sent > 0) onSynced?.();
+      setSyncing(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const uid = session?.user?.id;
+        const items = await getAllQueued();
+        let sent = 0;
+        let dropped = 0;
+        for (const item of items) {
+          if (uid && item.fosId !== uid) continue; // hanya milik user ini
+          try {
+            await submitVisit(item);
+            await removeFromQueue(item.id);
+            sent++;
+          } catch (e) {
+            // Antrian yang tidak akan pernah bisa masuk → buang, jangan diulang
+            // selamanya: duplikat tanggal, atau toko sudah berstatus final.
+            const msg = e instanceof Error ? e.message : "";
+            if (msg === "VISIT_DUPLICATE") {
+              await removeFromQueue(item.id);
+            } else if (msg === "STORE_ALREADY_ACTIVE") {
+              await removeFromQueue(item.id);
+              dropped++;
+            }
+            // error lain: biarkan di antrian, coba lagi nanti
+          }
+        }
+        const left = await getAllQueued();
+        setPending(left.length);
+        if (dropped > 0) setDroppedActive((n) => n + dropped);
+        if (sent > 0) onSynced?.();
+      } finally {
+        setSyncing(false);
+      }
     } finally {
-      setSyncing(false);
+      running.current = false;
     }
   }, [onSynced]);
 

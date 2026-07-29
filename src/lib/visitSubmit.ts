@@ -40,7 +40,11 @@ export async function submitVisit(p: SubmitPayload): Promise<void> {
       .select("register_status")
       .eq("id", p.store.id)
       .single();
-    if (isFinalStatus((cur as { register_status?: string } | null)?.register_status))
+    if (
+      isFinalStatus(
+        (cur as { register_status?: string } | null)?.register_status,
+      )
+    )
       throw new Error("STORE_ALREADY_ACTIVE");
   }
 
@@ -85,25 +89,62 @@ export async function submitVisit(p: SubmitPayload): Promise<void> {
     if (error) throw new Error(error.message);
   } else {
     const d = p.store.data;
-    const { data: newStore, error } = await supabase
+    const name = d.name.trim();
+
+    // Kalau nama toko sudah ada, pakai baris yang lama — jangan bikin baru.
+    // Tanpa ini, submit yang terkirim dua kali menghasilkan DUA baris toko
+    // berbeda, dan aturan "1 toko 1 kunjungan per hari" (yang berbasis
+    // store_id) jadi tidak menahan apa pun.
+    const { data: sameName } = await supabase
       .from("stores")
-      .insert({
-        name: d.name.trim(),
-        address: d.address.trim(),
-        phone: d.phone.trim(),
-        owner_name: d.ownerName.trim(),
-        distributor: d.distributor.trim() || null,
-        front_photo_url: storePaths[0] ?? null,
-        latitude: p.gps.lat,
-        longitude: p.gps.lng,
-        register_status: storeStatus,
-        baseline_status: "new",
-        created_by: fid,
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    storeId = (newStore as { id: string }).id;
+      .select("id, address, phone, owner_name, distributor")
+      .ilike("name", name) // tanpa wildcard = cocok persis, abaikan besar-kecil
+      .limit(1)
+      .maybeSingle();
+
+    if (sameName) {
+      const existing = sameName as {
+        id: string;
+        address: string | null;
+        phone: string | null;
+        owner_name: string | null;
+        distributor: string | null;
+      };
+      storeId = existing.id;
+      // Isi hanya kolom yang masih kosong; data lama tidak ditimpa.
+      const { error } = await supabase
+        .from("stores")
+        .update({
+          register_status: storeStatus,
+          address: existing.address?.trim() || d.address.trim() || null,
+          phone: existing.phone?.trim() || d.phone.trim() || null,
+          owner_name: existing.owner_name?.trim() || d.ownerName.trim() || null,
+          distributor:
+            existing.distributor?.trim() || d.distributor.trim() || null,
+        })
+        .eq("id", storeId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data: newStore, error } = await supabase
+        .from("stores")
+        .insert({
+          name,
+          address: d.address.trim(),
+          phone: d.phone.trim(),
+          owner_name: d.ownerName.trim(),
+          distributor: d.distributor.trim() || null,
+          front_photo_url: storePaths[0] ?? null,
+          latitude: p.gps.lat,
+          longitude: p.gps.lng,
+          register_status: storeStatus,
+          baseline_status: "new",
+          created_by: fid,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      storeId = (newStore as { id: string }).id;
+    }
   }
 
   const { error: vErr } = await supabase.from("visits").insert({

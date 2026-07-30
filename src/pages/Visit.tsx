@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { compressImage } from "@/lib/upload";
@@ -99,6 +99,11 @@ export default function Visit() {
     activityPhotos.length >= 2 &&
     gps;
 
+  // Kunci dobel-tap. State `loading` tidak cukup: dua tap beruntun bisa
+  // sama-sama lolos sebelum React sempat me-render tombol jadi disabled —
+  // terbukti pernah menghasilkan dua toko identik berselisih 141 md.
+  const submitting = useRef(false);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (
@@ -111,6 +116,8 @@ export default function Visit() {
       !gps
     )
       return;
+    if (submitting.current) return;
+    submitting.current = true;
     setLoading(true);
     setError(null);
 
@@ -221,6 +228,8 @@ export default function Visit() {
         setError(msg || "Gagal menyimpan kunjungan.");
       }
       setLoading(false);
+    } finally {
+      submitting.current = false;
     }
   }
 

@@ -142,8 +142,26 @@ export async function submitVisit(p: SubmitPayload): Promise<void> {
         })
         .select("id")
         .single();
-      if (error) throw new Error(error.message);
-      storeId = (newStore as { id: string }).id;
+      if (error) {
+        // 23505 di sini = index unik nama menolak: submit lain (dobel-tap /
+        // race) keburu membuat toko yang sama beberapa milidetik lebih dulu.
+        // Pakai toko pemenangnya; duplikat kunjungan akan ditahan oleh
+        // aturan unik (store_id, visit_date) di bawah.
+        if ((error as { code?: string }).code === "23505") {
+          const { data: winner } = await supabase
+            .from("stores")
+            .select("id")
+            .ilike("name", name)
+            .limit(1)
+            .maybeSingle();
+          if (!winner) throw new Error(error.message);
+          storeId = (winner as { id: string }).id;
+        } else {
+          throw new Error(error.message);
+        }
+      } else {
+        storeId = (newStore as { id: string }).id;
+      }
     }
   }
 

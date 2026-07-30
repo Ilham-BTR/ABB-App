@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy file ini jadi foto.config.json (tanpa .example) lalu isi. File asli SUDAH di-gitignore — JANGAN commit yang berisi secret key.",
+  "_dari": "Nilai r2* SAMA dengan yang dipakai saat migrasi foto — lihat scripts\\migrate.config.json di komputermu (r2AccountId, r2AccessKeyId, r2SecretAccessKey, r2Bucket).",
+  "r2AccountId": "6230d5b0d8a1e8194439fd832d9e3c03",
+  "r2AccessKeyId": "GANTI_ACCESS_KEY_ID",
+  "r2SecretAccessKey": "GANTI_SECRET_ACCESS_KEY",
+  "r2Bucket": "abb-star-reward-photos",
+  "_targetDir": "Folder tujuan di komputermu. Kosongkan = ./foto di folder ini. Pakai \\\\ (dobel backslash) di path Windows.",
+  "targetDir": "D:\\Backup\\ABB\\foto"
+}

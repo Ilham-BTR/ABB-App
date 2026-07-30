@@ -17,3 +17,5 @@ ops/backup/backup.log
 ops/backup/node_modules/
 ops/backup/package.json
 ops/backup/package-lock.json
+ops/backup/foto.config.json
+ops/backup/foto/

@@ -10,8 +10,8 @@
 //   - Membaca SEMUA kolom foto (visits x5 + stores.front_photo_url).
 //   - Batal otomatis kalau hasil baca DB mencurigakan (terlalu sedikit) —
 //     supaya gangguan koneksi tidak berujung menghapus seisi bucket.
-//   - Jalankan BACKUP-FOTO-1KLIK.bat dulu; yang terhapus di sini masih ada
-//     salinannya di folder backup (_tidak-terpakai).
+//   - PERHATIAN: foto yatim TIDAK ikut di-backup, jadi penghapusan di sini
+//     PERMANEN. Alat ini opsional — membiarkan file yatim juga tidak apa-apa.
 //
 // Config: foto.config.json (R2) + backup.config.json (service_role).
 // ============================================================

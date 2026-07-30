@@ -8,8 +8,10 @@ echo    Bersihkan foto YATIM di R2
 echo    Foto sisa kunjungan yang sudah dihapus dari database.
 echo ============================================================
 echo.
-echo Saran: jalankan BACKUP-FOTO-1KLIK.bat dulu, supaya semua file
-echo punya salinan lokal sebelum ada yang dihapus.
+echo PERHATIAN: foto yatim TIDAK ikut di-backup (backup hanya menyalin
+echo foto yang masih punya data visit). Menghapus lewat alat ini berarti
+echo PERMANEN. Kalau ragu, tutup saja jendela ini - membiarkan file yatim
+echo di R2 tidak apa-apa dan nyaris tanpa biaya.
 echo.
 
 where node >nul 2>nul

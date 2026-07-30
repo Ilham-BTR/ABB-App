@@ -8,7 +8,9 @@
 //   kunjungan/2026-07-21/Lautan Mas Electric/selfie.jpg
 //   kunjungan/2026-07-21/Lautan Mas Electric/foto-toko-1.jpg
 //   toko/Guntur Electric - foto-depan.jpg
-//   _tidak-terpakai/visit-photos/...   (file di R2 yang tidak dirujuk DB)
+//
+// Hanya foto yang MASIH punya data visit/toko yang di-backup. File yatim
+// (sisa kunjungan yang dihapus admin) dilewati — tetap tersimpan di R2.
 //
 // Idempoten & bisa dilanjutkan: file yang sudah ada dengan ukuran sama
 // dilewati, jadi aman diulang — hanya foto baru yang diunduh.
@@ -193,8 +195,14 @@ let bytes = 0;
 const failures = [];
 
 for (const { key, size } of objects) {
-  const rel = plan.get(key) ?? join("_tidak-terpakai", ...key.split("/"));
-  if (!plan.has(key)) orphan++;
+  // Hanya foto yang masih punya data visit/toko yang ikut di-backup.
+  // File yatim (sisa kunjungan yang sudah dihapus) dilewati — tetap ada
+  // di R2 kalau sewaktu-waktu dibutuhkan, tapi tidak memenuhi backup.
+  const rel = plan.get(key);
+  if (!rel) {
+    orphan++;
+    continue;
+  }
   const dest = join(targetDir, rel);
   if (existsSync(dest) && statSync(dest).size === size) {
     skipped++;
@@ -222,7 +230,7 @@ console.log(
   `\n\n============================================================` +
     `\nSelesai. Diunduh: ${downloaded} (${(bytes / 1048576).toFixed(1)} MB)` +
     ` · Sudah ada: ${skipped} · Gagal: ${failed}` +
-    `\nFile tak terpakai (tidak dirujuk DB): ${orphan} -> folder _tidak-terpakai` +
+    `\nDilewati (tidak punya data visit/toko, tetap ada di R2): ${orphan}` +
     `\n============================================================`
 );
 if (failures.length) {

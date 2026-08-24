@@ -19,3 +19,7 @@ ops/backup/package.json
 ops/backup/package-lock.json
 ops/backup/foto.config.json
 ops/backup/foto/
+
+# graphify: file path-lokal-mesin (graph-nya sendiri tetap di-commit)
+graphify-out/.graphify_python
+graphify-out/.graphify_root

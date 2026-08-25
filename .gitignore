@@ -23,3 +23,5 @@ ops/backup/foto/
 # graphify: file path-lokal-mesin (graph-nya sendiri tetap di-commit)
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+# backup snapshot bertanggal yang dibuat tiap `graphify update` — redundan
+graphify-out/????-??-??/

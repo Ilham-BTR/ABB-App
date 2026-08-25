@@ -1,157 +1,185 @@
-# Graph Report - Activate-Asia-Tomo-MS-Audit-Bridgestone  (2026-08-25)
+# Graph Report - ABB-App  (2026-08-26)
 
 ## Corpus Check
-- 75 files · ~63,676 words
+- 76 files · ~30,833 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 422 nodes · 831 edges · 26 communities (23 shown, 3 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.8)
+- 454 nodes · 720 edges · 35 communities (29 shown, 6 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
+## Graph Freshness
+- Built from commit: `63835cad`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
+
 ## Community Hubs (Navigation)
-- Core Types & App Shell
-- Offline DB & Sync Engine
-- Form Rendering
-- Scoring & Worker Auth
-- Runtime Dependencies
-- Dev Dependencies
-- App TS Config
-- Worker TS Config
-- Audit Spec & Scoring Rules
-- Build & Node Config
-- Photo Upload & Retry
-- Architecture & Deploy Concepts
-- Database Schema (D1)
-- XLSX to Schema Generator
-- Outlet SQL Generator
-- App Icon 512
-- Activate Asia Logo
-- Root TS Config
-- App Icon 192
-- Bridgestone Logo
+- useAuth
+- GpsButton.tsx
+- Visit.tsx
+- types.ts
+- dependencies
+- devDependencies
+- compilerOptions
+- UpdateVisits.tsx
+- index.html SPA Entry
+- Dashboard.tsx
+- AdminRoutes.tsx
+- Workflow Deploy ke Cloudflare
+- backup-foto.mjs
+- migrate-photos-to-r2.mjs
+- bersihkan-foto-r2.mjs
+- setup_fresh.sql
+- backup.mjs
+- pindah-supabase.mjs
+- Panduan Setup ABB Star Reward (dari nol)
+- manifest.json
+- Backup Database Supabase — ABB Star Reward
+- restore.mjs
+- atur-folder-jadwal.mjs
+- 0001_final_status_yes_active.sql
+- vite-env.d.ts
+- index.ts
+- 0002_unique_store_name.sql
+- public.schema_migrations
 
 ## God Nodes (most connected - your core abstractions)
-1. `base()` - 21 edges
-2. `SurveyFormPage()` - 20 edges
+1. `useAuth()` - 21 edges
+2. `supabase` - 20 edges
 3. `compilerOptions` - 18 edges
-4. `getDB()` - 17 edges
-5. `compilerOptions` - 17 edges
-6. `useAuth()` - 14 edges
-7. `api` - 13 edges
-8. `compilerOptions` - 12 edges
-9. `scripts` - 11 edges
-10. `syncNow()` - 10 edges
+4. `Panduan Setup ABB Star Reward (dari nol)` - 10 edges
+5. `registerStatusLabel()` - 9 edges
+6. `visitResultLabel()` - 9 edges
+7. `StoreField()` - 8 edges
+8. `registerStatusFromResult()` - 8 edges
+9. `submitVisit()` - 8 edges
+10. `AdminAddStorePage()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Skema Skor Java vs Non-Java` --semantically_similar_to--> `SPEC Aplikasi Surveyor`  [INFERRED] [semantically similar]
-  CLAUDE.md → docs/SPEC.md
-- `AuthState` --references--> `UserInfo`  [EXTRACTED]
-  src/context/auth.tsx → shared/types.ts
-- `index.html SPA Entry` --conceptually_related_to--> `Visual Design System`  [INFERRED]
-  index.html → docs/DESIGN.md
-- `SurveyFormPage()` --calls--> `computeScore()`  [EXTRACTED]
-  src/pages/SurveyForm.tsx → shared/scoring.ts
-- `Props` --references--> `Answers`  [EXTRACTED]
-  src/components/FormRenderer.tsx → shared/types.ts
+- `applyUpdate()` --calls--> `registerStatusFromResult()`  [EXTRACTED]
+  src/pages/admin/UpdateVisits.tsx → src/lib/types.ts
+- `MS Audit Bridgestone Surveyor PWA` --references--> `Workflow Deploy ke Cloudflare`  [EXTRACTED]
+  README.md → .github/workflows/deploy.yml
+- `fotoUrl()` --calls--> `photoUrl()`  [EXTRACTED]
+  src/components/VisitAdminPanel.tsx → src/lib/photo.ts
+- `saveFields()` --calls--> `registerStatusFromResult()`  [EXTRACTED]
+  src/components/VisitAdminPanel.tsx → src/lib/types.ts
+- `deleteVisit()` --calls--> `registerStatusFromResult()`  [EXTRACTED]
+  src/components/VisitAdminPanel.tsx → src/lib/types.ts
 
 ## Import Cycles
 - None detected.
 
-## Hyperedges (group relationships)
-- **Pipeline Offline-First Sinkronisasi** — claude_offline_first, claude_eager_photo_upload, claude_idempotent_submit [INFERRED 0.85]
-- **Rantai Sumber Kebenaran Skoring** — claude_xlsx_source_of_truth, claude_form_schema_source_of_truth, claude_scoring_ts_single_impl, claude_java_nonjava_scoring [EXTRACTED 1.00]
-- **Siklus Deploy Cloudflare via GitHub Actions** — github_workflows_deploy, github_workflows_run_sql, github_workflows_cleanup, github_workflows_check_subdomain [INFERRED 0.85]
+## Communities (35 total, 6 thin omitted)
 
-## Communities (26 total, 3 thin omitted)
+### Community 0 - "useAuth"
+Cohesion: 0.14
+Nodes (15): App(), AppLayout(), Logo(), LogoutButton(), ProtectedRoute(), AuthCtx, AuthProvider(), AuthState (+7 more)
 
-### Community 0 - "Core Types & App Shell"
-Cohesion: 0.06
-Nodes (47): FieldOption, FieldType, FormSchema, Outlet, Role, SurveyPhotoRow, SurveyRow, App() (+39 more)
-
-### Community 1 - "Offline DB & Sync Engine"
-Cohesion: 0.10
-Nodes (46): Answers, PhotoMeta, SyncBadge(), VIDEO_MAX_BYTES, AppDB, cacheSchema(), deleteDraft(), deleteDraftWithPhotos() (+38 more)
-
-### Community 2 - "Form Rendering"
-Cohesion: 0.09
-Nodes (42): FormField, FormSection, fmtTanggal, NAV, FieldControl(), fieldVisible(), fmtId(), fmtPoin() (+34 more)
-
-### Community 3 - "Scoring & Worker Auth"
-Cohesion: 0.11
-Nodes (31): computeScore(), FormDef, SurveySubmit, UserInfo, b64decode(), b64encode(), generateToken(), getSessionUser() (+23 more)
-
-### Community 4 - "Runtime Dependencies"
-Cohesion: 0.05
-Nodes (39): browser-image-compression, fflate, @fontsource/ibm-plex-sans, @fontsource/sora, hono, idb, leaflet, dependencies (+31 more)
-
-### Community 5 - "Dev Dependencies"
-Cohesion: 0.08
-Nodes (25): @cloudflare/workers-types, devDependencies, @cloudflare/workers-types, playwright, tailwindcss, @tailwindcss/vite, @types/leaflet, @types/react (+17 more)
-
-### Community 6 - "App TS Config"
-Cohesion: 0.08
-Nodes (24): DOM, DOM.Iterable, src, compilerOptions, composite, isolatedModules, jsx, lib (+16 more)
-
-### Community 7 - "Worker TS Config"
-Cohesion: 0.09
-Nodes (22): @cloudflare/workers-types, worker, compilerOptions, composite, isolatedModules, lib, module, moduleDetection (+14 more)
-
-### Community 8 - "Audit Spec & Scoring Rules"
-Cohesion: 0.10
-Nodes (21): shared/form-schema.json (sumber kebenaran), Skema Skor Java vs Non-Java, Penalti -10 (MS No.4 & No.26), CLAUDE.md Project Guide, shared/scoring.ts computeScore, Bridgestone_MS_Audit.xlsx (file asli klien), Visual Design System, Check-in GPS + Peringatan Jarak >50m (+13 more)
-
-### Community 9 - "Build & Node Config"
-Cohesion: 0.12
-Nodes (15): ES2023, vite.config.ts, compilerOptions, composite, isolatedModules, lib, module, moduleDetection (+7 more)
-
-### Community 10 - "Photo Upload & Retry"
-Cohesion: 0.44
-Nodes (10): bacaError(), denganRetry(), fatal(), JEDA_RETRY, jsonFetch(), sekaliUpload(), tidur(), uploadBlobSmart() (+2 more)
-
-### Community 11 - "Architecture & Deploy Concepts"
+### Community 1 - "GpsButton.tsx"
 Cohesion: 0.22
-Nodes (10): Auth PBKDF2 + Session Cookie, Eager Photo Upload (metode 2W Federal), Submit Idempotent (UUID client), Offline-First (IndexedDB + Sync Engine), Single Worker (Hono) API + Static Assets, Export .xlsx (Worker, fflate, 2 sheet), Workflow Cek Subdomain workers.dev, Workflow Bersihkan Resource Lama (+2 more)
+Nodes (9): GpsButton(), takeLocation(), Props, LeafletMap(), markerIcon, MiniMap(), Props, getCurrentPosition() (+1 more)
 
-### Community 12 - "Database Schema (D1)"
-Cohesion: 0.60
-Nodes (5): outlets, photos, sessions, surveys, users
+### Community 2 - "Visit.tsx"
+Cohesion: 0.06
+Nodes (41): AlertDialog(), PATH, Tone, MultiPhotoInput(), Props, OfflineSync(), PhotoInput(), Props (+33 more)
 
-### Community 13 - "XLSX to Schema Generator"
+### Community 3 - "types.ts"
+Cohesion: 0.08
+Nodes (36): StatusBadge(), STYLES, StoreEditModal(), fotoUrl(), STYLES, VisitResultBadge(), exportXlsx(), photoUrl() (+28 more)
+
+### Community 4 - "dependencies"
+Cohesion: 0.07
+Nodes (28): browser-image-compression, leaflet, lucide-react, dependencies, browser-image-compression, exceljs, leaflet, lucide-react (+20 more)
+
+### Community 5 - "devDependencies"
+Cohesion: 0.10
+Nodes (21): autoprefixer, devDependencies, autoprefixer, postcss, tailwindcss, @types/leaflet, @types/react, @types/react-dom (+13 more)
+
+### Community 6 - "compilerOptions"
+Cohesion: 0.08
+Nodes (23): DOM, DOM.Iterable, ES2020, src, compilerOptions, allowImportingTsExtensions, baseUrl, isolatedModules (+15 more)
+
+### Community 7 - "UpdateVisits.tsx"
+Cohesion: 0.10
+Nodes (24): Button(), Props, FormField, Props, Cell, cellToString(), readAllSheets(), readXlsx() (+16 more)
+
+### Community 9 - "Dashboard.tsx"
+Cohesion: 0.10
+Nodes (13): Bar, BarChart(), niceScale(), DonutChart(), DonutSlice, HBar, HBarChart(), DashboardPage() (+5 more)
+
+### Community 10 - "AdminRoutes.tsx"
+Cohesion: 0.11
+Nodes (8): AdminNav(), LINKS, CoverageMap(), CoveragePoint, MapsPage(), AdminStoresPage(), roleLabel(), UsersPage()
+
+### Community 12 - "backup-foto.mjs"
+Cohesion: 0.11
+Nodes (12): db, __dirname, failures, foto, JENIS, missing, objects, plan (+4 more)
+
+### Community 13 - "migrate-photos-to-r2.mjs"
+Cohesion: 0.14
+Nodes (12): BUCKETS, cfg, cfgPath, dest, __dirname, dryRun, failures, missing (+4 more)
+
+### Community 14 - "bersihkan-foto-r2.mjs"
+Cohesion: 0.17
+Nodes (9): db, __dirname, doDelete, foto, mb, orphans, referenced, s3 (+1 more)
+
+### Community 15 - "setup_fresh.sql"
+Cohesion: 0.27
+Nodes (9): auth.users, public, public.handle_new_user, on_auth_user_created, public.is_admin(), public.is_superadmin(), public.profiles, public.stores (+1 more)
+
+### Community 16 - "backup.mjs"
+Cohesion: 0.18
+Nodes (7): cfg, cfgPath, __dirname, dumpDirs, logFile, supabase, TABLES
+
+### Community 17 - "pindah-supabase.mjs"
+Cohesion: 0.22
+Nodes (10): cfg, cfgPath, dest, __dirname, dryRun, mapUid(), payload, storeRows (+2 more)
+
+### Community 18 - "Panduan Setup ABB Star Reward (dari nol)"
+Cohesion: 0.18
+Nodes (10): 1. Backup data lama (WAJIB — jaring pengaman), 2. Cloudflare R2, 3. Project Supabase baru, 4. Pindahkan data lama → Supabase baru, 5. Setup R2 + Edge Function upload, 6. Migrasi foto lama → R2, 7. Deploy ke Cloudflare Pages, Panduan Setup ABB Star Reward (dari nol) (+2 more)
+
+### Community 19 - "manifest.json"
+Cohesion: 0.22
+Nodes (8): background_color, description, display, icons, name, short_name, start_url, theme_color
+
+### Community 20 - "Backup Database Supabase — ABB Star Reward"
+Cohesion: 0.29
+Nodes (6): Backup Database Supabase — ABB Star Reward, Cara manual (via perintah), Cara TERCEPAT (Windows, 1 klik) 🖱️, Mau backup OTOMATIS tiap hari (tanpa klik)?, Restore (memulihkan data), Yang di-backup
+
+### Community 21 - "restore.mjs"
+Cohesion: 0.29
+Nodes (6): cfg, __dirname, dryRun, onlyArg, payload, supabase
+
+### Community 22 - "atur-folder-jadwal.mjs"
 Cohesion: 0.40
-Nodes (5): clean(), parse_questions(), Kolom: No, Kategori, [Type], Kategori, Sub Kategori, Pertanyaan, lalu triplet…, Satu seksi berisi SEMUA pertanyaan, urut kolom 'No' (permintaan user: jangan…, sections_from()
+Nodes (4): dataCfg, dataCfgPath, __dirname, fotoCfgPath
 
-### Community 14 - "Outlet SQL Generator"
-Cohesion: 0.67
-Nodes (3): main(), String SQL apa adanya (escape kutip tunggal), atau NULL., sq()
-
-### Community 15 - "App Icon 512"
-Cohesion: 0.67
-Nodes (3): Activate Asia Tomo App Icon (Letter A Monogram), Circular blue and orange swoosh ring, Letter A Monogram (blue gradient)
-
-### Community 16 - "Activate Asia Logo"
-Cohesion: 1.00
-Nodes (3): Activate Asia Brand, Activate Asia Logo (logo-aa.png), Letter A Monogram
+### Community 26 - "index.ts"
+Cohesion: 0.40
+Nodes (3): ALLOWED_FOLDERS, ALLOWED_TYPES, cors
 
 ## Knowledge Gaps
-- **141 isolated node(s):** `name`, `version`, `private`, `type`, `description` (+136 more)
+- **179 isolated node(s):** `__dirname`, `dataCfgPath`, `dataCfg`, `fotoCfgPath`, `__dirname` (+174 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `devDependencies` connect `Dev Dependencies` to `Runtime Dependencies`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **What connects `name`, `version`, `private` to the rest of the system?**
-  _141 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Core Types & App Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.0579476861167002 - nodes in this community are weakly interconnected._
-- **Should `Offline DB & Sync Engine` be split into smaller, more focused modules?**
-  _Cohesion score 0.10377358490566038 - nodes in this community are weakly interconnected._
-- **Should `Form Rendering` be split into smaller, more focused modules?**
-  _Cohesion score 0.09224489795918367 - nodes in this community are weakly interconnected._
-- **Should `Scoring & Worker Auth` be split into smaller, more focused modules?**
-  _Cohesion score 0.11265969802555169 - nodes in this community are weakly interconnected._
-- **Should `Runtime Dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
+- **Why does `supabase` connect `types.ts` to `useAuth`, `Visit.tsx`, `UpdateVisits.tsx`, `Dashboard.tsx`, `AdminRoutes.tsx`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `useAuth()` connect `useAuth` to `AdminRoutes.tsx`, `types.ts`, `UpdateVisits.tsx`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **What connects `__dirname`, `dataCfgPath`, `dataCfg` to the rest of the system?**
+  _179 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `useAuth` be split into smaller, more focused modules?**
+  _Cohesion score 0.14245014245014245 - nodes in this community are weakly interconnected._
+- **Should `Visit.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.059395801331285206 - nodes in this community are weakly interconnected._
+- **Should `types.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.07518796992481203 - nodes in this community are weakly interconnected._
+- **Should `dependencies` be split into smaller, more focused modules?**
+  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._

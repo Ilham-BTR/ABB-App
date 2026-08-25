@@ -128,6 +128,10 @@ alter table public.profiles enable row level security;
 alter table public.stores   enable row level security;
 alter table public.visits   enable row level security;
 
+-- schema_migrations dibuat oleh tool migrasi (bukan schema app); kunci dari
+-- akses API publik. Tanpa policy: service_role & koneksi langsung tetap bypass.
+alter table if exists public.schema_migrations enable row level security;
+
 -- ---------- profiles ----------
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own" on public.profiles

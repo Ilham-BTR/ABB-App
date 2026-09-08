@@ -72,6 +72,7 @@ from (
            when 'yes_inactive' then 'sudah_belum_aktif'
            when 'decline'      then 'decline'
            when 'follow_up'    then 'follow_up'
+           when 'non_npwp_badan' then 'non_npwp_badan'
            else 'other'
          end as rs
   from public.visits v

@@ -7,11 +7,13 @@ export type RegisterStatus =
   | "no"
   | "decline"
   | "follow_up"
-  | "other";
+  | "other"
+  | "non_npwp_badan";
 
 export const REGISTER_STATUS_OPTIONS: { value: RegisterStatus; label: string }[] = [
   { value: "sudah_aktif", label: "Yes, Active" },
   { value: "sudah_belum_aktif", label: "Yes, Inactive" },
+  { value: "non_npwp_badan", label: "Non NPWP Badan" },
   { value: "new", label: "New" },
   { value: "no", label: "No" },
   { value: "decline", label: "Decline" },
@@ -41,6 +43,7 @@ export const STATUS_COLOR: Record<string, string> = {
   decline: "#dc2626",
   follow_up: "#4f46e5",
   other: "#64748b",
+  non_npwp_badan: "#0d9488",
 };
 
 // Warna (hex) per Visit Result — dipakai di grafik dashboard.
@@ -50,6 +53,7 @@ export const VISIT_RESULT_COLOR: Record<string, string> = {
   decline: "#dc2626",
   follow_up: "#4f46e5",
   other: "#64748b",
+  non_npwp_badan: "#0d9488",
 };
 
 // Visit Result = hasil kunjungan yang diisi MD tiap visit.
@@ -58,11 +62,13 @@ export type VisitResult =
   | "yes_inactive"
   | "decline"
   | "follow_up"
-  | "other";
+  | "other"
+  | "non_npwp_badan";
 
 export const VISIT_RESULT_OPTIONS: { value: VisitResult; label: string }[] = [
   { value: "yes_active", label: "Yes, Active" },
   { value: "yes_inactive", label: "Yes, Inactive" },
+  { value: "non_npwp_badan", label: "Non NPWP Badan" },
   { value: "decline", label: "Decline" },
   { value: "follow_up", label: "Follow-up" },
   { value: "other", label: "Other" },
@@ -79,6 +85,7 @@ export function visitResultFromLabel(label: string): VisitResult | null {
   if (!s) return null;
   const exact = VISIT_RESULT_OPTIONS.find((o) => o.label.toLowerCase() === s);
   if (exact) return exact.value;
+  if (s.includes("npwp")) return "non_npwp_badan";
   // Toleransi variasi penulisan.
   if (s.includes("inactive")) return "yes_inactive";
   if (s.includes("active")) return "yes_active";
@@ -102,6 +109,8 @@ export function registerStatusFromResult(result: VisitResult): RegisterStatus {
       return "follow_up";
     case "other":
       return "other";
+    case "non_npwp_badan":
+      return "non_npwp_badan";
   }
 }
 
@@ -113,6 +122,7 @@ const STATUS_RANK: Record<string, number> = {
   decline: 1,
   follow_up: 1,
   other: 1,
+  non_npwp_badan: 1,
   sudah_belum_aktif: 2,
   sudah_aktif: 3,
 };

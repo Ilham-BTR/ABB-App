@@ -54,12 +54,13 @@ create table if not exists public.visits (
 alter table public.visits drop constraint if exists visits_register_status_check;
 alter table public.visits add constraint visits_register_status_check
   check (register_status in
-    ('sudah_aktif','sudah_belum_aktif','new','no','decline','follow_up','other'));
+    ('sudah_aktif','sudah_belum_aktif','new','no','decline','follow_up','other',
+     'non_npwp_badan'));
 
 alter table public.visits drop constraint if exists visits_visit_result_check;
 alter table public.visits add constraint visits_visit_result_check
   check (visit_result is null or visit_result in
-    ('yes_active','yes_inactive','decline','follow_up','other'));
+    ('yes_active','yes_inactive','decline','follow_up','other','non_npwp_badan'));
 
 -- 1 toko maksimal 1 kunjungan per hari (cegah dobel input).
 alter table public.visits drop constraint if exists visits_store_date_unique;
